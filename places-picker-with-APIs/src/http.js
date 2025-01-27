@@ -28,5 +28,5 @@ export async function fetchUserPlaces() {
     throw new Error("Failed to fetch user places.");
   }
   const placesData = await response.json();
-  return placesData;
+  return placesData.places;
 }

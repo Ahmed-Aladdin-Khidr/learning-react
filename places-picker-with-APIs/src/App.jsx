@@ -7,33 +7,21 @@ import logoImg from "./assets/logo.png";
 import AvailablePlaces from "./components/AvailablePlaces.jsx";
 import { updateUserPlaces, fetchUserPlaces } from "./http.js";
 import ErrorPage from "./components/Error.jsx";
+import { useFetch } from "./hooks/useFetch.js";
 
 function App() {
   const selectedPlace = useRef();
 
-  const [userPlaces, setUserPlaces] = useState([]);
-  const [errorOccurred, setErrorOccurred] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchUserSavedPlaces = async () => {
-      setIsLoading(true);
-      try {
-        const placesData = await fetchUserPlaces();
-        setUserPlaces(placesData.places);
-      } catch (error) {
-        setErrorOccurred({
-          message: error.message || "Failed to fetch user places.",
-        });
-        setUserPlaces(userPlaces);
-      }
-      setIsLoading(false);
-    };
-
-    fetchUserSavedPlaces();
-  }, []);
-
   const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [errorUpdatingPlaces, setErrorUpdatingPlaces] = useState();
+
+  const {
+    receivedData: userPlaces,
+    errorOccurred,
+    isLoading,
+    setReceivedData: setUserPlaces
+  } = useFetch(fetchUserPlaces, []);
+
 
   function handleStartRemovePlace(place) {
     setModalIsOpen(true);
@@ -59,41 +47,46 @@ function App() {
       await updateUserPlaces([selectedPlace, ...userPlaces]);
     } catch (error) {
       setUserPlaces(userPlaces);
-      setErrorOccurred({
+      setErrorUpdatingPlaces({
         message: error.message || "Failed to update places.",
       });
     }
   }
 
-  const handleRemovePlace = useCallback(async function handleRemovePlace() {
-    setUserPlaces((prevPickedPlaces) =>
-      prevPickedPlaces.filter((place) => place.id !== selectedPlace.current.id)
-    );
-    try {
-      await updateUserPlaces(
-        userPlaces.filter((place) => place.id !== selectedPlace.current.id)
+  const handleRemovePlace = useCallback(
+    async function handleRemovePlace() {
+      setUserPlaces((prevPickedPlaces) =>
+        prevPickedPlaces.filter(
+          (place) => place.id !== selectedPlace.current.id
+        )
       );
-    } catch (error) {
-      setUserPlaces(userPlaces);
-      setErrorOccurred({
-        message: error.message || "Failed to update places.",
-      });
-    }
+      try {
+        await updateUserPlaces(
+          userPlaces.filter((place) => place.id !== selectedPlace.current.id)
+        );
+      } catch (error) {
+        setUserPlaces(userPlaces);
+        setErrorUpdatingPlaces({
+          message: error.message || "Failed to update places.",
+        });
+      }
 
-    setModalIsOpen(false);
-  }, [userPlaces]);
+      setModalIsOpen(false);
+    },
+    [userPlaces, setUserPlaces]
+  );
 
   function handleError() {
-    setErrorOccurred(null);
+    setErrorUpdatingPlaces(null);
   }
 
   return (
     <>
-      <Modal open={errorOccurred} onClose={handleError}>
-        {errorOccurred && (
+       <Modal open={errorUpdatingPlaces} onClose={handleError}>
+        {errorUpdatingPlaces && (
           <ErrorPage
-            title={"An error occured"}
-            message={errorOccurred.message}
+            title="An error occurred!"
+            message={errorUpdatingPlaces.message}
             onConfirm={handleError}
           />
         )}
@@ -115,7 +108,12 @@ function App() {
         </p>
       </header>
       <main>
-        {errorOccurred && <ErrorPage title="An error occurred!" message={errorOccurred.message}/>}
+        {errorOccurred && (
+          <ErrorPage
+            title="An error occurred!"
+            message={errorOccurred.message}
+          />
+        )}
         <Places
           title="I'd like to visit ..."
           fallbackText="Select the places you would like to visit below."
