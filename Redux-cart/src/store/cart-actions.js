@@ -3,13 +3,6 @@ import { cartActions } from "./cart-slice";
 
 export const fetchCartData = () => {
   return async (dispatch) => {
-    dispatch(
-      uiActions.showNotification({
-        status: "pending",
-        title: "Fetching...",
-        message: "Fetching cart data!",
-      })
-    );
 
     const fetchData = async () => {
       const response = await fetch(
@@ -26,7 +19,10 @@ export const fetchCartData = () => {
 
     try {
       const cartData = await fetchData();
-      dispatch(cartActions.replaceCart(cartData || { items: [], totalQuantity: 0 }));
+      dispatch(cartActions.replaceCart({
+        items: cartData.items || [],
+        totalQuantity: cartData.totalQuantity
+      }));
       
     } catch (error) {
       dispatch(
