@@ -1,14 +1,23 @@
-import {useParams} from 'react-router-dom';
+import { useRouteLoaderData } from "react-router-dom";
+import EventItem from "../components/EventItem";
 
-function EventDetailPage(){
-    const params = useParams();
+function EventDetailPage() {
+  const data = useRouteLoaderData('event-detail');
 
-    return (
-        <>
-            <h1>Event Detail Page</h1>
-            <p>Event ID: {params.eventId}</p>
-        </>
-    );
+  return <EventItem event={data.event}/>;
 }
 
 export default EventDetailPage;
+
+export async function loader({ request, params }) {
+  const response = await fetch(
+    "http://localhost:8080/events/" + params.eventId
+  );
+  if (!response.ok) {
+    throw new Response(JSON.stringify({ message: "Failed to fetch event" }), {
+      status: 500,
+    });
+  } else {
+    return response;
+  }
+}
