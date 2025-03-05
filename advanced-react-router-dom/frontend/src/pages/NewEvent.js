@@ -25,6 +25,10 @@ export async function action({ request, params }) {
     body: JSON.stringify(eventDate),
   });
 
+  if (response.status === 422){
+    return response;
+  }
+
   if (!response.ok) {
     throw new Response(JSON.stringify({ message: "Failed to create event" }), {
       status: 500,
