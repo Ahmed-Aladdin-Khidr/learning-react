@@ -3,25 +3,27 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchEvents } from "../../util/http.js";
 import LoadingIndicator from "../UI/LoadingIndicator";
 import ErrorBlock from "../UI/ErrorBlock.jsx";
+import EventItem from "./EventItem.jsx";
 
 export default function FindEventSection() {
   const searchElement = useRef();
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState();
 
-  const { data, isPending, isError, error } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ["events", { search }],
     queryFn: ({signal}) => fetchEvents({ signal, searchTerm: search }),
     staleTime: 5000,
     gcTime: 30000,
+    enabled: search !== undefined,
   });
 
   function handleSubmit(event) {
     event.preventDefault();
-    setSearchTerm(searchElement.current.value);
+    setSearch(searchElement.current.value);
   }
 
   let content = <p>Please enter a search term and to find events.</p>;
-  if (isPending) {
+  if (isLoading) {
     content = <LoadingIndicator />;
   }
 
