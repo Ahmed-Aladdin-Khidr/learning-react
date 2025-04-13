@@ -15,14 +15,17 @@ export default function EventDetails() {
 
   const { mutate } = useMutation({
     mutationFn: deleteEvent,
-    onSuccess: ()=>{
-      queryClient.invalidateQueries({ queryKey: ["events"] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["events"],
+        refetchType: "none",
+      });
       navigate("/events");
-    }
+    },
   });
 
-  function handleDelete(){
-    mutate({id});
+  function handleDelete() {
+    mutate({ id });
   }
 
   let content;
