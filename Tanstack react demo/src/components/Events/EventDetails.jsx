@@ -4,8 +4,12 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import Header from "../Header.jsx";
 import ErrorBlock from "../UI/ErrorBlock.jsx";
 import { fetchEvent, deleteEvent, queryClient } from "../../util/http.js";
+import { useState } from "react";
+import Modal from "../UI/Modal.jsx";
 
 export default function EventDetails() {
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const { id } = useParams();
   const navigate = useNavigate();
   const { data, isPending, isError, error } = useQuery({
@@ -13,7 +17,12 @@ export default function EventDetails() {
     queryFn: ({ signal }) => fetchEvent({ signal, id }),
   });
 
-  const { mutate } = useMutation({
+  const {
+    mutate,
+    isPending: isPendingDeletion,
+    isError: isErrorDeleting,
+    error: deleteError,
+  } = useMutation({
     mutationFn: deleteEvent,
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -23,6 +32,14 @@ export default function EventDetails() {
       navigate("/events");
     },
   });
+
+  function handleStartDelete() {
+    setIsDeleting(true);
+  }
+
+  function handleStopDelete() {
+    setIsDeleting(false);
+  }
 
   function handleDelete() {
     mutate({ id });
@@ -60,6 +77,39 @@ export default function EventDetails() {
     });
     content = (
       <>
+        {isDeleting && (
+          <Modal onClose={handleStopDelete}>
+            <h2>Are you sure?</h2>
+            <p>
+              Do you want to delete this event? Thin Action cannot be undone.
+            </p>
+            <div className="form-actions">
+              {isPendingDeletion && (
+                <p className="loading-text">Deleting please wait...</p>
+              )}
+              {!isPendingDeletion && (
+                <>
+                  <button onClick={handleDelete} className="button">
+                    Delete
+                  </button>
+                  <button onClick={handleStopDelete} className="button-text">
+                    Cancel
+                  </button>
+                </>
+              )}
+            </div>
+            {isErrorDeleting && (
+              <ErrorBlock
+                title="Failed to delete event"
+                message={
+                  deleteError.info?.message ||
+                  "Failed to delete event, please try again later."
+                }
+              />
+            )}
+          </Modal>
+        )}
+
         <header>
           <h1>{data.title}</h1>
           <nav>
