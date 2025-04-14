@@ -43,6 +43,7 @@ export default function EventForm({ inputData, onSubmit, children }) {
           message={error.info?.message || "Please try again later."}
         />
       )}
+
       {data && (
         <div className="control">
           <ImagePicker
